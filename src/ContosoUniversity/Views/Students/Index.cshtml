@@ -1,0 +1,156 @@
+@model PaginatedList<ContosoUniversity.Models.Student>
+
+@{
+    ViewData["Title"] = "Students";
+}
+
+<h2>Students</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<form asp-action="Index" method="get">
+    <!--Pesquisa-->
+    <div class="form-actions no-color">
+        <p>
+            Find by name: <input type="text" name="SearchString" id="SearchString" value="@ViewData["CurrentFilter"]" />
+            <input type="button" value="Search" class="btn btn-default btn" id="btFind" /> |
+            <a asp-action="Index">Back to Full List</a>
+        </p>
+    </div>
+</form>
+
+<table class="table" id="student">
+    <thead>
+        <tr>
+            <th>
+                First Name
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Last Name</a>
+            </th>
+            <th>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["DateSortParm"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">Enrollment Date</a>
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<!--Paginação-->
+
+
+<input type="button" id="previous" value="Previous"/>
+
+<input type="button" id="next" value="Next" />
+
+
+@*asp-route-sortOrder="@ViewData["CurrentSort"]"
+    asp-route-currentFilter="@ViewData["CurrentFilter"]"*@
+
+@section Scripts {
+    <script>
+
+        var pindex = @(Model.PageIndex);
+        var nresultados = $('tbody').children().attr("data-count");
+
+        var TotalPages=function(count){
+
+            return Math.ceil(count / 3);
+        };
+
+        //Botão de pesquisa
+
+        $('#btFind').on("click", function () {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("StudentSearch")',   //executa a função de ação
+                data: {
+                    SearchString: $("#SearchString").val()//recolhe o valor a submeter
+                },
+                success: function (data) {
+                    $("tbody").empty();//limpa o body
+                    $('tbody').append(data);//adiciona as row's ao body
+
+                    nresultados = $('tbody').children().attr("data-count");
+
+                    var rows = document.getElementById('student').getElementsByTagName('tbody')[0].getElementsByTagName('tr').length;//pesquisa sem resultados
+                    if (rows === 0) {
+                        alert("Not Found!");
+                    }
+
+                },
+
+            });
+        })
+
+
+        //Botão de Next
+        $('#next').on("click", function () {
+            if(pindex < TotalPages(nresultados))
+            {
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("StudentSearch")',   //executa a função de ação
+                    data: {
+                        page: pindex+1
+                    },
+                    success: function (data) {
+                        if(pindex < TotalPages(nresultados))
+                        {
+                            pindex++;
+                            $("tbody").empty();//limpa o body
+                            $('tbody').append(data);//adiciona as row's ao body
+                        }else{
+
+                            $('#next').prop('disabled', true);
+                            $('#previous').prop('disabled', false);
+                        }
+
+                    },
+
+                });
+            }else{
+
+                $('#next').prop('disabled', true);
+                $('#previous').prop('disabled', false);
+            }
+        })
+
+
+        //Botão de Previous
+        $('#previous').on("click", function () {
+            if(pindex > 1)
+            {
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("StudentSearch")',   //executa a função de ação
+                    data: {
+                        page: pindex-1
+                    },
+                    success: function (data) {
+                        if(pindex > 1)
+                        {
+                            pindex--;
+                            $("tbody").empty();//limpa o body
+                            $('tbody').append(data);//adiciona as row's ao body
+                        } else{
+
+                            $('#previous').prop('disabled', true);
+                            $('#next').prop('disabled', false);
+                        }
+
+                    },
+
+                });
+            } else{
+
+                $('#previous').prop('disabled', true);
+                $('#next').prop('disabled', false);
+            }
+        })
+
+    </script>
+}
