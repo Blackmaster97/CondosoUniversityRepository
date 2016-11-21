@@ -242,6 +242,7 @@ namespace ContosoUniversity.Controllers
 
             if (student == null)
             {
+
                 return RedirectToAction("Index");
             }
 
